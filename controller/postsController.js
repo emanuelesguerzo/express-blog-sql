@@ -27,27 +27,55 @@ const index = (req, res) => {
 const show = (req, res) => {
 
     const id = req.params.id;
-    const sql = 'SELECT * FROM `posts` WHERE id = ?;';
+    const sql = "SELECT * FROM `posts` WHERE id = ?;";
 
-    connection.query(sql, [id], (err, results) => {
+    const tagsSql = `
+        SELECT GROUP_CONCAT(tags.label SEPARATOR ', ') AS tag_label 
+        FROM post_tag
+        INNER JOIN posts
+        ON post_tag.post_id = posts.id
+        INNER JOIN tags
+        ON post_tag.tag_id = tags.id 
+        WHERE posts.id = ?
+        GROUP BY posts.id;
+    `;
+
+    connection.query(sql, [id], (err, posts) => {
 
         if (err) {
             return res.status(500).json({
-                message: 'Internal Server Error'
-            })
-        } else if (results.length === 0) {
-            return res.status(404).json({
-                message: 'Post Not Found'
-            })
-        } else {
-            return res.status(200).json({
-                status: 'success',
-                data: results,
-            })
+                message: "Internal Server Error",
+            });
         }
 
-    })
-    
+        if (posts.length === 0) {
+            return res.status(404).json({
+                message: "Post Not Found",
+            });
+        } else {
+
+            connection.query(tagsSql, [id], (err, tags) => {
+
+                if (err) {
+                    return res.status(500).json({
+                        message: "Internal Server Error",
+                    });
+                }
+
+                const postsDetails = {
+                    ...posts[0],
+                    tags: tags,
+                };
+
+                return res.status(200).json({
+                    status: "success",
+                    data: postsDetails,
+                });
+            });
+
+        }
+    });
+
 };
 
 // // Store
@@ -82,6 +110,7 @@ const destroy = (req, res) => {
         }
 
     })
+
 };
 
 // Export
