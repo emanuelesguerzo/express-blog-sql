@@ -3,7 +3,7 @@ const connection = require('../data/db');
 
 // Index
 const index = (req, res) => {
-    
+
     const sql = 'SELECT * FROM `posts`;';
 
     connection.query(sql, (err, results) => {
@@ -18,6 +18,7 @@ const index = (req, res) => {
                 data: results,
             })
         }
+
     })
 
 };
@@ -44,7 +45,21 @@ const show = (req, res) => {
 
 // Destroy
 const destroy = (req, res) => {
+    
+    const id = req.params.id;
+    const sql = 'DELETE FROM `posts` WHERE id = ?;';
 
+    connection.query(sql, [id], (err) => {
+        
+        if (err) {
+            return res.status(500).json({
+                message: 'Internal Server Error'
+            })
+        } else {
+            return res.sendStatus(204);
+        }
+
+    })
 };
 
 // Export
